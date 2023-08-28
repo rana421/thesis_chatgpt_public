@@ -6,8 +6,6 @@ dotenv_path = join(dirname(__file__), '../.env')
 
 load_dotenv(dotenv_path)
 
-AP = os.environ.get("API_KEY")
-
 ARXIV_API_KEY = os.environ.get("ARXIV_API_KEY")
 IEEE_API_KEY = os.environ.get("IEEE_API_KEY")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")

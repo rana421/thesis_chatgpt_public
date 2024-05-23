@@ -8,7 +8,7 @@ with open('requirements.txt') as f:
 
 setup(
     name="thesis-chatgpt",
-    version="1.0.0",
+    version="2.0.0",
     author="rana421",
     author_email="u554980e@gmail.com",
     description="Retrieve a paper from the research paper platform, summarize it using ChatGPT, and send it to Skype.",

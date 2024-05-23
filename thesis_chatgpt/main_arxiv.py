@@ -1,5 +1,5 @@
 import arxiv
-import openai
+from openai import OpenAI
 import datetime
 import json
 import os
@@ -8,7 +8,7 @@ import setting
 
 config_path = os.path.join(os.path.dirname(__file__), "config.json")
 # OpenAIのapiキー
-openai.api_key = setting.OPENAI_API_KEY
+OPENAI_API_KEY = setting.OPENAI_API_KEY
 
 # Skypeのログイン情報
 USER     = setting.SKYPE_USERNAME
@@ -20,15 +20,15 @@ with open(config_path) as f:
     key_word = config["key_word"]
 
 def get_summary(result):
-    system = """与えられた論文の要点を3点のみでまとめ、以下のフォーマットで日本語で出力してください。```
-    タイトルの日本語訳
-    ・要点1
-    ・要点2
-    ・要点3
-    ```"""
+    system = """与えられた論文の要点を3点のみでまとめ、以下のフォーマットで日本語で出力してください。
+タイトルの日本語訳
+・要点1
+・要点2
+・要点3"""
 
     text = f"title: {result.title}\nbody: {result.summary}"
-    response = openai.ChatCompletion.create(
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[
                     {'role': 'system', 'content': system},
@@ -47,8 +47,6 @@ def get_summary(result):
 
 
 def main(key_word):
-    sk = Skype(USER, PWD)
-    ch = sk.chats.chat(GROUP_ID)
     yesterday = (datetime.date.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 
     # queryを用意、今回は、三種類のqueryを用意
@@ -73,6 +71,8 @@ def main(key_word):
         return
 
     # 論文情報をskypeに投稿する
+    sk = Skype(USER, PWD)
+    ch = sk.chats.chat(GROUP_ID)
     for i, result in enumerate(result_list):
         try:
             # skypeに投稿するメッセージを組み立てる

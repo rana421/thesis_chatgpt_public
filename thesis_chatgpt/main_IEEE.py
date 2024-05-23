@@ -1,4 +1,4 @@
-import openai
+from openai import OpenAI
 import datetime
 import json
 import os
@@ -9,7 +9,7 @@ import setting
 
 config_path = os.path.join(os.path.dirname(__file__), "config.json")
 # OpenAIのapiキー
-openai.api_key = setting.OPENAI_API_KEY
+OPENAI_API_KEY = setting.OPENAI_API_KEY
 
 # Skypeのログイン情報
 USER         = setting.SKYPE_USERNAME
@@ -20,28 +20,29 @@ IEEE_API_KEY = setting.IEEE_API_KEY
 with open(config_path) as f:
     config = json.load(f)
     key_word = config["key_word"]
+    OPENAI_MODEL = config["openai_model"]
 
-IEEE_base_url = "http://ieeexploreapi.ieee.org/api/v1/search/articles"
+IEEE_BASE_URL = "http://ieeexploreapi.ieee.org/api/v1/search/articles"
 
 
 def get_summary(result):
-    system = """与えられた論文の要点を3点のみでまとめ、以下のフォーマットで日本語で出力してください。```
-    タイトルの日本語訳
-    ・要点1
-    ・要点2
-    ・要点3
-    ```"""
+    system = """与えられた論文の要点を3点のみでまとめ、以下のフォーマットで日本語で出力してください。
+タイトルの日本語訳
+・要点1の内容
+・要点2の内容
+・要点3の内容"""
 
     text = f"title: {result['title']}\n body: {result['abstract']}"
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+    client = OpenAI(api_key=OPENAI_API_KEY)
+    response = client.chat.completions.create(
+        model=OPENAI_MODEL,
         messages=[
             {'role': 'system', 'content': system},
             {'role': 'user', 'content': text}
         ],
         temperature=0.25,
     )
-    summary = response['choices'][0]['message']['content']
+    summary = response.choices[0].message.content
 
     title_en = result['title']
     title, *body = summary.split('\n')
@@ -52,8 +53,6 @@ def get_summary(result):
 
 
 def main(key_word):
-    sk = Skype(USER, PWD)
-    ch = sk.chats.chat(GROUP_ID)
     yesterday = (datetime.date.today() - datetime.timedelta(days=1)).strftime("%Y%m%d")
 
     current_year = datetime.datetime.now().year
@@ -71,7 +70,7 @@ def main(key_word):
         "max_records": 200
     }
 
-    response = requests.get(IEEE_base_url, params=params)
+    response = requests.get(IEEE_BASE_URL, params=params)
     if response.status_code == 200:
         print("API call successful")
     else:
@@ -97,6 +96,8 @@ def main(key_word):
         return
 
     # 論文情報をskypeに投稿する
+    sk = Skype(USER, PWD)
+    ch = sk.chats.chat(GROUP_ID)
     for i, result in enumerate(result_list):
         try:
             # skypeに投稿するメッセージを組み立てる
